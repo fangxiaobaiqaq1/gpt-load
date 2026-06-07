@@ -95,6 +95,7 @@ type Group struct {
 	Sort                int                  `gorm:"default:0" json:"sort"`
 	TestModel           string               `gorm:"type:varchar(255);not null" json:"test_model"`
 	ParamOverrides      datatypes.JSONMap    `gorm:"type:json" json:"param_overrides"`
+	StripParams         datatypes.JSON       `gorm:"type:json" json:"strip_params"`
 	Config              datatypes.JSONMap    `gorm:"type:json" json:"config"`
 	HeaderRules         datatypes.JSON       `gorm:"type:json" json:"header_rules"`
 	ModelRedirectRules  datatypes.JSONMap    `gorm:"type:json" json:"model_redirect_rules"`
@@ -109,6 +110,7 @@ type Group struct {
 	ProxyKeysMap              map[string]struct{}        `gorm:"-" json:"-"`
 	HeaderRuleList            []HeaderRule               `gorm:"-" json:"-"`
 	ModelRedirectMap          map[string]string          `gorm:"-" json:"-"`
+	StripParamsList           []string                   `gorm:"-" json:"-"`
 	FailoverStatusCodeMatcher failover.StatusCodeMatcher `gorm:"-" json:"-"`
 }
 

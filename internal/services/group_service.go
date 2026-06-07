@@ -95,6 +95,7 @@ type GroupCreateParams struct {
 	TestModel           string
 	ValidationEndpoint  string
 	ParamOverrides      map[string]any
+	StripParams         []string
 	ModelRedirectRules  map[string]string
 	ModelRedirectStrict bool
 	Config              map[string]any
@@ -117,6 +118,7 @@ type GroupUpdateParams struct {
 	HasTestModel        bool
 	ValidationEndpoint  *string
 	ParamOverrides      map[string]any
+	StripParams         []string
 	ModelRedirectRules  map[string]string
 	ModelRedirectStrict *bool
 	Config              map[string]any
@@ -231,6 +233,11 @@ func (s *GroupService) CreateGroup(ctx context.Context, params GroupCreateParams
 		return nil, NewI18nError(app_errors.ErrValidation, "validation.invalid_model_redirect", map[string]any{"error": err.Error()})
 	}
 
+	stripParamsJSON, err := normalizeStripParams(params.StripParams)
+	if err != nil {
+		return nil, err
+	}
+
 	group := models.Group{
 		Name:                name,
 		DisplayName:         strings.TrimSpace(params.DisplayName),
@@ -242,6 +249,7 @@ func (s *GroupService) CreateGroup(ctx context.Context, params GroupCreateParams
 		TestModel:           testModel,
 		ValidationEndpoint:  validationEndpoint,
 		ParamOverrides:      params.ParamOverrides,
+		StripParams:         stripParamsJSON,
 		ModelRedirectRules:  convertToJSONMap(params.ModelRedirectRules),
 		ModelRedirectStrict: params.ModelRedirectStrict,
 		Config:              cleanedConfig,
@@ -435,6 +443,12 @@ func (s *GroupService) UpdateGroup(ctx context.Context, id uint, params GroupUpd
 	if params.ParamOverrides != nil {
 		group.ParamOverrides = params.ParamOverrides
 	}
+
+	stripParamsJSON, err := normalizeStripParams(params.StripParams)
+	if err != nil {
+		return nil, err
+	}
+	group.StripParams = stripParamsJSON
 
 	// Validate model redirect rules for aggregate groups
 	if group.GroupType == "aggregate" && params.ModelRedirectRules != nil && len(params.ModelRedirectRules) > 0 {
@@ -978,6 +992,36 @@ func (s *GroupService) validateAndCleanUpstreams(upstreams json.RawMessage) (dat
 	}
 
 	return datatypes.JSON(cleanedUpstreams), nil
+}
+
+func normalizeStripParams(params []string) (datatypes.JSON, error) {
+	if len(params) == 0 {
+		return datatypes.JSON("[]"), nil
+	}
+
+	normalized := make([]string, 0, len(params))
+	seen := make(map[string]bool)
+	for _, p := range params {
+		name := strings.TrimSpace(p)
+		if name == "" {
+			continue
+		}
+		if seen[name] {
+			continue
+		}
+		seen[name] = true
+		normalized = append(normalized, name)
+	}
+
+	if len(normalized) == 0 {
+		return datatypes.JSON("[]"), nil
+	}
+
+	buf, err := json.Marshal(normalized)
+	if err != nil {
+		return nil, NewI18nError(app_errors.ErrInternalServer, "error.invalid_config_format", map[string]any{"error": err.Error()})
+	}
+	return datatypes.JSON(buf), nil
 }
 
 func calculateRequestStats(total, failed int64) RequestStats {

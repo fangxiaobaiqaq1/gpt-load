@@ -116,6 +116,22 @@ func (gm *GroupManager) Initialize() error {
 				}
 			}
 
+			// Parse strip params
+			if len(group.StripParams) > 0 {
+				var stripList []string
+				if err := json.Unmarshal(group.StripParams, &stripList); err != nil {
+					logrus.WithFields(logrus.Fields{
+						"group_name": g.Name,
+						"error":      err,
+					}).Warn("Failed to parse strip_params for group")
+					g.StripParamsList = []string{}
+				} else {
+					g.StripParamsList = stripList
+				}
+			} else {
+				g.StripParamsList = []string{}
+			}
+
 			// Load sub-groups for aggregate groups
 			if g.GroupType == "aggregate" {
 				if subGroups, ok := subGroupsByAggregateID[g.ID]; ok {
@@ -136,6 +152,7 @@ func (gm *GroupManager) Initialize() error {
 				"header_rules_count":         len(g.HeaderRuleList),
 				"model_redirect_rules_count": len(g.ModelRedirectMap),
 				"model_redirect_strict":      g.ModelRedirectStrict,
+				"strip_params_count":         len(g.StripParamsList),
 				"sub_group_count":            len(g.SubGroups),
 			}).Debug("Loaded group with effective config")
 		}

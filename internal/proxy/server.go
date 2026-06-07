@@ -108,6 +108,12 @@ func (ps *ProxyServer) HandleProxy(c *gin.Context) {
 		return
 	}
 
+	finalBodyBytes, err = ps.applyStripParams(finalBodyBytes, group)
+	if err != nil {
+		response.Error(c, app_errors.NewAPIError(app_errors.ErrInternalServer, fmt.Sprintf("Failed to strip parameters: %v", err)))
+		return
+	}
+
 	isStream := channelHandler.IsStreamRequest(c, bodyBytes)
 
 	ps.executeRequestWithRetry(c, channelHandler, originalGroup, group, finalBodyBytes, isStream, startTime, 0)

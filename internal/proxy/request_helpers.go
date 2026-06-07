@@ -30,6 +30,24 @@ func (ps *ProxyServer) applyParamOverrides(bodyBytes []byte, group *models.Group
 	return json.Marshal(requestData)
 }
 
+func (ps *ProxyServer) applyStripParams(bodyBytes []byte, group *models.Group) ([]byte, error) {
+	if len(group.StripParamsList) == 0 || len(bodyBytes) == 0 {
+		return bodyBytes, nil
+	}
+
+	var requestData map[string]any
+	if err := json.Unmarshal(bodyBytes, &requestData); err != nil {
+		logrus.Warnf("failed to unmarshal request body for strip params, passing through: %v", err)
+		return bodyBytes, nil
+	}
+
+	for _, param := range group.StripParamsList {
+		delete(requestData, param)
+	}
+
+	return json.Marshal(requestData)
+}
+
 // logUpstreamError provides a centralized way to log errors from upstream interactions.
 func logUpstreamError(context string, err error) {
 	if err == nil {

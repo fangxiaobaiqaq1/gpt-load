@@ -80,7 +80,8 @@ const hasAdvancedConfig = computed(() => {
   return (
     (props.group?.config && Object.keys(props.group.config).length > 0) ||
     props.group?.param_overrides ||
-    (props.group?.header_rules && props.group.header_rules.length > 0)
+    (props.group?.header_rules && props.group.header_rules.length > 0) ||
+    (props.group?.strip_params && props.group.strip_params.length > 0)
   );
 });
 
@@ -759,6 +760,17 @@ function resetPage() {
                     <pre class="config-json">{{
                       JSON.stringify(group?.param_overrides || "", null, 2)
                     }}</pre>
+                  </n-form-item>
+                  <n-form-item
+                    v-if="group?.strip_params && group.strip_params.length > 0"
+                    :label="`${t('keys.stripParams')}：`"
+                    :span="2"
+                  >
+                    <div class="header-rules-display">
+                      <n-tag v-for="param in group.strip_params" :key="param" type="warning" size="small">
+                        {{ param }}
+                      </n-tag>
+                    </div>
                   </n-form-item>
                 </n-form>
               </div>

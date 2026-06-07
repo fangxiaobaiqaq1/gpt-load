@@ -72,6 +72,7 @@ interface GroupFormData {
   test_model: string;
   validation_endpoint: string;
   param_overrides: string;
+  strip_params: string[];
   model_redirect_rules: string;
   model_redirect_strict: boolean;
   config: Record<string, number | string | boolean>;
@@ -97,6 +98,7 @@ const formData = reactive<GroupFormData>({
   test_model: "",
   validation_endpoint: "",
   param_overrides: "",
+  strip_params: [] as string[],
   model_redirect_rules: "",
   model_redirect_strict: false,
   config: {},
@@ -108,6 +110,14 @@ const formData = reactive<GroupFormData>({
 
 const channelTypeOptions = ref<{ label: string; value: string }[]>([]);
 const configOptions = ref<GroupConfigOption[]>([]);
+const stripParamsOptions = ref([
+  { label: "presence_penalty", value: "presence_penalty" },
+  { label: "frequency_penalty", value: "frequency_penalty" },
+  { label: "top_p", value: "top_p" },
+  { label: "top_a", value: "top_a" },
+  { label: "min_p", value: "min_p" },
+  { label: "repetition_penalty", value: "repetition_penalty" },
+]);
 const channelTypesFetched = ref(false);
 const configOptionsFetched = ref(false);
 
@@ -298,6 +308,7 @@ function resetForm() {
     test_model: isCreateMode ? testModelPlaceholder.value : "",
     validation_endpoint: "",
     param_overrides: "",
+    strip_params: [],
     model_redirect_rules: "",
     model_redirect_strict: false,
     config: {},
@@ -340,6 +351,7 @@ function loadGroupData() {
     test_model: props.group.test_model || "",
     validation_endpoint: props.group.validation_endpoint || "",
     param_overrides: JSON.stringify(props.group.param_overrides || {}, null, 2),
+    strip_params: Array.isArray(props.group.strip_params) ? [...props.group.strip_params] : [],
     model_redirect_rules: JSON.stringify(props.group.model_redirect_rules || {}, null, 2),
     model_redirect_strict: props.group.model_redirect_strict || false,
     config: {},
@@ -528,6 +540,7 @@ async function handleSubmit() {
       test_model: formData.test_model,
       validation_endpoint: formData.validation_endpoint,
       param_overrides: paramOverrides,
+      strip_params: formData.strip_params,
       model_redirect_rules: modelRedirectRules,
       model_redirect_strict: formData.model_redirect_strict,
       config,
@@ -1164,6 +1177,34 @@ async function handleSubmit() {
                     placeholder='{"temperature": 0.7}'
                     :rows="4"
                   />
+                </n-form-item>
+
+                <n-form-item path="strip_params">
+                  <template #label>
+                    <div class="form-label-with-tooltip">
+                      {{ t("keys.stripParams") }}
+                      <n-tooltip trigger="hover" placement="top">
+                        <template #trigger>
+                          <n-icon :component="HelpCircleOutline" class="help-icon config-help" />
+                        </template>
+                        {{ t("keys.stripParamsTip") }}
+                      </n-tooltip>
+                    </div>
+                  </template>
+                  <n-select
+                    v-model:value="formData.strip_params"
+                    :placeholder="t('keys.stripParamsPlaceholder')"
+                    :options="stripParamsOptions"
+                    multiple
+                    filterable
+                    tag
+                    :max-tag-count="3"
+                  />
+                  <template #feedback>
+                    <div style="font-size: 14px; color: #999">
+                      {{ t("keys.stripParamsTip") }}
+                    </div>
+                  </template>
                 </n-form-item>
               </div>
             </n-collapse-item>
